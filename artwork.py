@@ -11,27 +11,36 @@ import sys
 import configparser
 import pickle
 
+def installPackage(Package):
+    import pip
+    try:
+        pip.main(['install',Package])
+    except Exception as e:
+        sys.exit("Couldn't install {} with pip - {}".format(Package,e))
+    
+
+try:
+    import requests
+except ImportError:
+    installPackage("requests")
+
 try:
     from PIL import Image
 except ImportError:
-    sys.exit("You need Pillow to be installed - simply install it by entering 'pip install Pillow' into your console")
+    installPackage("Pillow")
 
 try:
     import whatapi
 except ImportError as e:
-    sys.exit("You need WhatAPI to be installed - simply install it by entering 'pip install whatapi' into your console - {}".format(e))
+    installPackage("whatapi")
 
 try:
     from mutagen.flac import FLAC
     #from mutagen.aac import AAC
     from mutagen.easyid3 import EasyID3 as MP3
 except ImportError:
-    sys.exit("You need mutagen to be installed - simply install it by entering 'pip install mutagen' into your console")
+    installPackage("mutagen")
 
-try:
-    import requests
-except ImportError:
-    sys.exit("You need requests to be installed - simply install it by entering 'pip install requests' into your console")
     
 
 logging.basicConfig(level=logging.ERROR)
