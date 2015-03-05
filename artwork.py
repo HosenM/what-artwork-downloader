@@ -22,23 +22,27 @@ def installPackage(Package):
 try:
     import requests
 except ImportError:
+    logging.warning("Requests is not installed - will try to install it now via pip")
     installPackage("requests")
 
 try:
     from PIL import Image
 except ImportError:
+    logging.warning("Pillow is not installed - will try to install it now via pip")
     installPackage("Pillow")
 
 try:
     import whatapi
 except ImportError as e:
-    installPackage("whatapi")
+    logging.warning("WhatAPI is not installed - will try to install it now via pip")
+    installPackage("https://github.com/isaaczafuta/whatapi/tarball/master")
 
 try:
     from mutagen.flac import FLAC
-    #from mutagen.aac import AAC
+    from mutagen.mp4 import MP4
     from mutagen.easyid3 import EasyID3 as MP3
 except ImportError:
+    logging.warning("Mutagen is not installed - will try to install it now via pip")
     installPackage("mutagen")
 
     
@@ -298,9 +302,6 @@ def main():
                     logging.error("Album not tagged in folder {}".format(examplefile))
                     album = ""
                 
-                if album == "" and artist == "":
-                    logging.error("Album isn't tagged at all: {}".format(examplefile))
-                    continue
                 
             if os.path.splitext(examplefile)[1] == ".mp3":
                 try:
@@ -314,29 +315,24 @@ def main():
                     logging.error("Album not tagged in folder {}".format(examplefile))
                     album = ""
                 
-                if album == "" and artist == "":
-                    logging.error("Album isn't tagged at all: {}".format(os.path.dirname(examplefile)))
-                    continue
             
-            #AAC doesn't seem to work right now
-            """
             if os.path.splitext(examplefile)[1] == ".m4a":
                 try:
-                    artist = AAC(examplefile)["artist"]
+                    artist = MP4(examplefile)["\xa9ART"]
                 except KeyError:
                     logging.warning("Artist not tagged in folder {}".format(examplefile))
                     artist = ""
                 try:
-                    album = AAC(examplefile)["album"]
-                except KeyError:
+                    album = MP4(examplefile)["\xa9alb"]
+                except:
                     logging.warning("Album not tagged in folder {}".format(examplefile))
                     album = ""
                 
-                if album == "" and artist == "":
-                    logging.warning("Album isn't tagged at all: {}".format(examplefile))
-                    continue
-            """
             
+
+            if album == "" and artist == "":
+                logging.warning("Album isn't tagged at all: {}".format(examplefile))
+                continue
             
             logging.info("Found the following information for {}: Artist: {} and Album: {}".format(examplefile,artist,album))
             
