@@ -1,3 +1,7 @@
+# artwork user
+artwork.ini
+artwork.dat
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
