@@ -65,7 +65,7 @@ except ImportError:
 
     
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 
 class ArtworkFinder():
@@ -259,7 +259,6 @@ def main():
                 break
 
             except Exception as e:
-                logging.debug(e)
                 logintryouts += 1
                 if logintryouts > 3:
                     print("It seems What-CD is down, so we won't use that now this time")
@@ -267,7 +266,7 @@ def main():
                     if config['iTunes'].getboolean('use') == False:
                         sys.exit("No iTunes and what.CD search is now active - so we're closing the program")
                     break
-                print("There was a LogIn Error - You have still have {}/3 chances. Please Re Enter Your LoigIn Data".format(logintryouts))
+                print("There was a LogIn Error {e} - You have still have {}/3 chances. Please Re Enter Your LoigIn Data".format(e,logintryouts))
                 whatcduser = input("What.cd Username:")
                 whatcdpw = input("What.cd Password:")
                 config['what-cd'] = {'use':True,'username':whatcduser,'password':whatcdpw}
@@ -284,9 +283,9 @@ def main():
                 whatcdapi = whatapi.WhatAPI(username = config['what-cd']['username'], password=config['what-cd']['password'], cookies = whatcdcookies)
                 print("LogIn into What.CD was sucessful")
                 break
-            except:
+            except Exception as e:
                 if logintryouts >= 3:
-                    print("There seems to be some kind of error during logging in - we won't use What.cd this time")
+                    print("There seems to be some kind of error during logging in : {} - we won't use What.cd this time".format(e))
                     config['what-cd']['use'] = False
                     if config['iTunes'].getboolean('use') == False:
                         sys.exit("No iTunes and what.CD search is now active - so we're closing the program")
