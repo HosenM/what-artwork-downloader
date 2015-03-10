@@ -14,7 +14,7 @@ import pickle
 def installPackage(Package):
     import pip
     try:
-        pip.main(['install',Package])
+        pip.main(['install','--upgrade',Package])
     except Exception as e:
         sys.exit("Couldn't install {} with pip - {}".format(Package,e))
     
@@ -24,30 +24,48 @@ try:
 except ImportError:
     logging.warning("Requests is not installed - will try to install it now via pip")
     installPackage("requests")
+    try:
+        import requests
+    except ImportError as e:
+        sys.exit("Failed to install requests - {}".format(e))
 
 try:
     from PIL import Image
 except ImportError:
     logging.warning("Pillow is not installed - will try to install it now via pip")
     installPackage("Pillow")
+    try:
+        from PIL import Image
+    except ImportError as e:
+        sys.exit("Failed to install Pillow - {}".format(e))
 
 try:
     import whatapi
-except ImportError as e:
+except ImportError:
     logging.warning("WhatAPI is not installed - will try to install it now via pip")
-    installPackage("https://github.com/isaaczafuta/whatapi/tarball/master")
+    installPackage("https://github.com/capital-G/whatapi/tarball/master")
+    try:
+        import whatapi
+    except ImportError as e:
+        sys.exit("Failed to install WhatAPI - {}".format(e))
 
 try:
     from mutagen.flac import FLAC
     from mutagen.mp4 import MP4
     from mutagen.easyid3 import EasyID3 as MP3
 except ImportError:
-    logging.warning("Mutagen is not installed - will try to install it now via pip")
+    logging.warning("mutagen is not installed - will try to install it now via pip")
     installPackage("mutagen")
+    try:
+        from mutagen.flac import FLAC
+        from mutagen.mp4 import MP4
+        from mutagen.easyid3 import EasyID3 as MP3
+    except ImportError as e:
+        sys.exit("Failed to install mutagen - {}".format(e))
 
     
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class ArtworkFinder():
@@ -240,7 +258,8 @@ def main():
                 pickle.dump(whatcdapi.session.cookies, open('artwork.dat', 'wb'))
                 break
 
-            except:
+            except Exception as e:
+                logging.debug(e)
                 logintryouts += 1
                 if logintryouts > 3:
                     print("It seems What-CD is down, so we won't use that now this time")
@@ -269,6 +288,9 @@ def main():
                 if logintryouts >= 3:
                     print("There seems to be some kind of error during logging in - we won't use What.cd this time")
                     config['what-cd']['use'] = False
+                    if config['iTunes'].getboolean('use') == False:
+                        sys.exit("No iTunes and what.CD search is now active - so we're closing the program")
+                    break
                 logintryouts += 1 
     
     path = input("Please Enter your Path you want to scan:")
