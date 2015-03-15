@@ -298,7 +298,7 @@ def main():
         audio = False
         artwork = False
         for file in os.listdir(os.path.join(path,folder)):
-            if os.path.splitext(file)[1] in (".mp3", ".flac"):
+            if os.path.splitext(file)[1] in (".mp3", ".flac", ".m4a"):
                 audio = True
                 examplefile = os.path.join(path,folder,file)
             if file.lower() in (config['folder']['jpgname'].lower()):
