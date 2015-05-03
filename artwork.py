@@ -199,6 +199,8 @@ class ArtworkFinder():
 
 def main():
     
+    os.chdir(os.path.split(sys.argv[0])[0])
+    
     print("Welcome to artwork.py")
     
     config = configparser.ConfigParser()
@@ -292,9 +294,17 @@ def main():
                     break
                 logintryouts += 1 
     
-    path = input("Please Enter your Path you want to scan:")
-        
-    for folder in (os.path.join(root, folder) for root, folders, files in os.walk(path) for folder in folders):
+    
+    try:
+        path = sys.argv[1]
+        print("Scans {}".format(path))
+        folderstocheck = [path]
+    except:
+        path = input("Please Enter your Path you want to scan:")
+        folderstocheck = list((os.path.join(root, folder) for root, folders, files in os.walk(path) for folder in folders))
+        folderstocheck.append(path)
+    
+    for folder in folderstocheck:
         audio = False
         artwork = False
         for file in os.listdir(os.path.join(path,folder)):
@@ -361,7 +371,12 @@ def main():
             getArtwork.getArtwork()
             
     print("Done")
+    input("Press Enter To Exit")
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("Error - {}".format(e))
+        input("Press Enter To Exit")
