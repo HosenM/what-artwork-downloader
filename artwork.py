@@ -198,8 +198,7 @@ class ArtworkFinder():
         
 
 def main():
-    
-    os.chdir(os.path.split(sys.argv[0])[0])
+    os.chdir(os.path.split(os.path.abspath(__file__))[0])
     
     print("Welcome to artwork.py")
     
@@ -375,8 +374,8 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        print("Error - {}".format(e))
-        input("Press Enter To Exit")
+    #try:
+    main()
+    #except Exception as e:
+    #    print("Error - {}".format(e))
+    #    input("Press Enter To Exit")
