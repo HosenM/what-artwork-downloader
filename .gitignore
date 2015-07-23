@@ -2,6 +2,9 @@
 artwork.ini
 artwork.dat
 
+# git stuff
+.idea
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
