@@ -10,6 +10,7 @@ import shutil
 import sys
 import configparser
 import pickle
+import re
 
 DEBUG = False
 
@@ -180,6 +181,7 @@ class ArtworkFinder():
             return False
         try:
             self._highres_url = what_request['response']['results'][0]['cover']
+
         except KeyError:
             logger.info("Found a What-CD Release but without cover")
             return False
@@ -196,25 +198,26 @@ class ArtworkFinder():
         logger.debug("Cover-URL: {}".format(self._highres_url))
         
         downloader = urllib.request.build_opener()
-        downloader.addheaders = [('User-agent', 'Mozilla/5.0')] #avoid problems with whatIMG
+        downloader.addheaders = [('User-agent', 'Mozilla/5.0')] # avoid problems with whatIMG
+        file_name = re.search(r"(.+\.jpg)", self._highres_url).group(0)
         try:
             with downloader.open(self._highres_url) as \
-                    response, open(os.path.join(self._path, self._highres_url.split("/")[-1]), "wb") as out_file:
+                    response, open(os.path.join(self._path, file_name.split("/")[-1]), "wb") as out_file:
                 shutil.copyfileobj(response, out_file)
         except Exception as e:
             logger.error("Couldn't write HighRes Artwork for {} - URL is {}: {}".format(self._path,
-                                                                                         self._highres_url,
-                                                                                         e))
+                                                                                        self._highres_url,
+                                                                                        e))
             return False
-        
-        if os.path.splitext(self._highres_url.split("/")[-1])[1] not in (".jpg", ".jpeg"):
+
+        if os.path.splitext(file_name.split("/")[-1])[1] not in (".jpg", ".jpeg"):
             logger.info("The downloaded Artwork {} is not .jpg or .jpeg, "
-                         "so we will convert it to .jpg now".format(self._highres_url.split("/")[-1]))
-            im = Image.open(os.path.join(self._path,self._highres_url.split("/")[-1])).convert('RGB')
-            im.save(os.path.join(self._path,self._config['folder']['jpgname']))
-            os.remove(os.path.join(self._path,self._highres_url.split("/")[-1]))
+                        "so we will convert it to .jpg now".format(file_name.split("/")[-1]))
+            im = Image.open(os.path.join(self._path, file_name.split("/")[-1])).convert('RGB')
+            im.save(os.path.join(self._path, self._config['folder']['jpgname']))
+            os.remove(os.path.join(self._path, file_name.split("/")[-1]))
         else:
-            os.rename(os.path.join(self._path, self._highres_url.split("/")[-1]),
+            os.rename(os.path.join(self._path, file_name.split("/")[-1]),
                       os.path.join(self._path, self._config['folder']['jpgname']))
 
 
