@@ -198,8 +198,10 @@ class ArtworkFinder():
         logger.debug("Cover-URL: {}".format(self._highres_url))
         
         downloader = urllib.request.build_opener()
-        downloader.addheaders = [('User-agent', 'Mozilla/5.0')] # avoid problems with whatIMG
-        file_name = re.search(r"(.+\.jpg)", self._highres_url).group(0)
+        downloader.addheaders = [('User-agent', 'Mozilla/5.0')]  # avoid problems with whatIMG
+
+        # todo: avoid problems with obscure file-extensions on servers - fix this with a regex!
+        file_name = self._highres_url.split('?')[0]
         try:
             with downloader.open(self._highres_url) as \
                     response, open(os.path.join(self._path, file_name.split("/")[-1]), "wb") as out_file:
