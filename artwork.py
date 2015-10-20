@@ -12,11 +12,18 @@ import configparser
 import pickle
 
 DEBUG = False
-if DEBUG:
-    logging.basicConfig(level=logging.DEBUG)
-else:
-    logging.basicConfig(level=logging.ERROR)
 
+logger = logging.getLogger('artwork_downloader')
+ch = logging.StreamHandler()
+if DEBUG:
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+
+logger.addHandler(ch)
+logger.info('Hello')
 
 def install_package(package):
     import pip
@@ -29,7 +36,7 @@ def install_package(package):
 try:
     import requests
 except ImportError:
-    logging.warning("Requests is not installed - will try to install it now via pip")
+    logger.warning("Requests is not installed - will try to install it now via pip")
     install_package("requests")
     try:
         import requests
@@ -39,7 +46,7 @@ except ImportError:
 try:
     from PIL import Image
 except ImportError:
-    logging.warning("Pillow is not installed - will try to install it now via pip")
+    logger.warning("Pillow is not installed - will try to install it now via pip")
     install_package("Pillow")
     try:
         from PIL import Image
@@ -49,7 +56,7 @@ except ImportError:
 try:
     import whatapi
 except ImportError:
-    logging.warning("WhatAPI is not installed - will try to install it now via pip")
+    logger.warning("WhatAPI is not installed - will try to install it now via pip")
     install_package("https://github.com/capital-G/whatapi/tarball/master")
     try:
         import whatapi
@@ -61,7 +68,7 @@ try:
     from mutagen.mp4 import MP4
     from mutagen.easyid3 import EasyID3 as MP3
 except ImportError:
-    logging.warning("mutagen is not installed - will try to install it now via pip")
+    logger.warning("mutagen is not installed - will try to install it now via pip")
     install_package("mutagen")
     try:
         from mutagen.flac import FLAC
@@ -103,21 +110,16 @@ class ArtworkFinder():
             if itunes_api_results:
                 store_success = self.store()
                 if store_success is False:
-                    logging.info("No Artwork found in iTunes for {}".format(self._path))
-                    print("No Artwork found in iTunes for {} - {} in {}".format(self._artist.title(),
-                                                                                self._album.title(),
-                                                                                self._path))
+                    logger.info("No Artwork found in iTunes for {} - {} in {}".format(self._artist.title(),
+                                                                                       self._album.title(),
+                                                                                       self._path))
                     return False
-                logging.info("Sucessfully saved the iTunes Artwork for {} - {} in the folder {}".format(self._artist,
-                                                                                                        self._album,
-                                                                                                        self._path))
-                print("Saved iTunes Artwork for {} - {} in {}".format(self._artist.title(),
-                                                                      self._album.title(),
-                                                                      self._path))
+                logger.info("Successfully saved the iTunes Artwork for {} - {} in the folder {}".format(self._artist,
+                                                                                                         self._album,
+                                                                                                         self._path))
                 return True
             else:
-                logging.info("No Artwork found in iTunes for {}".format(self._path))
-                print("No Artwork found in iTunes for {} - {} in {}".format(self._artist.title(),
+                logger.info("No Artwork found in iTunes for {} - {} in {}".format(self._artist.title(),
                                                                             self._album.title(),
                                                                             self._path))
         
@@ -126,23 +128,19 @@ class ArtworkFinder():
             if whatcdapi_results:
                 store_success = self.store()
                 if store_success is False:
-                    logging.info("No Artwork found in what.CD for {}".format(self._path))
-                    print("No Artwork found in what.CD for {} - {} in {}".format(self._artist.title(),
-                                                                                 self._album.title(),
-                                                                                 self._path))
+                    logger.info("No Artwork found in what.CD for {} - {} in {}".format(self._artist.title(),
+                                                                                        self._album.title(),
+                                                                                        self._path))
                     return False
-                logging.info("Sucessfully saved the what.CD Artwork for {} - {} in the folder {}".format(self._artist,
+                logger.info("Sucessfully saved the what.CD Artwork for {} - {} in the folder {}".format(self._artist,
                                                                                                          self._album,
                                                                                                          self._path))
-                print("Saved what.CD Artwork for {} - {} in {}".format(self._artist.title(),
-                                                                       self._album.title(),
-                                                                       self._path))
+
                 return True
             else:
-                logging.info("No Artwork found in what.CD for {}".format(self._path))
-                print("No Artwork found in what.CD for {} - {} in {}".format(self._artist.title(),
-                                                                             self._album.title(),
-                                                                             self._path))
+                logger.info("No Artwork found in what.CD for {} - {} in {}".format(self._artist.title(),
+                                                                                    self._album.title(),
+                                                                                    self._path))
 
         return False
     
@@ -155,62 +153,62 @@ class ArtworkFinder():
                 request = requests.get("http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/wa/wsSearch",
                                        params=request_params)
             except requests.exceptions.Timeout:
-                logging.error("No connection to iTunes API - check your Internet connection")
+                logger.error("No connection to iTunes API - check your Internet connection")
                 return False
 
             if request.status_code != 200:
-                logging.error("Error from iTunes API - Error Code {} - {}".format(request.status_code, request.text))
+                logger.error("Error from iTunes API - Error Code {} - {}".format(request.status_code, request.text))
                 return False
 
             if len(request.json()['results']) == 0:
-                logging.info("No search results  in iTunes {} for {}".format(country, self._name))
+                logger.info("No search results  in iTunes {} for {}".format(country, self._name))
                 return False
             else:
-                logging.info("Found iTunes results for {} in {} iTunes Store".format(self._name, country))
+                logger.debug("Found iTunes results for {} in {} iTunes Store".format(self._name, country))
                 break
         
         self._highres_url = request.json()['results'][0].get('artworkUrl100').replace("100x100", "1200x1200")
         self._normres_url = request.json()['results'][0].get('artworkUrl100').replace("100x100", "600x600")
-        logging.info("Found iTunes Artwork for {}, - {}".format(self._name, self._highres_url))
+        logger.info("Found iTunes Artwork for {}, - {}".format(self._name, self._highres_url))
         self._source = "iTunes"
         return True
 
     def whatcd_api(self):
         what_request = self._whatcd_api.request("browse",searchstr=self._name)
         if len(what_request['response']['results']) == 0:
-            logging.info("No What.CD results for {} - {}".format(self._artist, self._album))
+            logger.info("No What.CD results for {} - {}".format(self._artist, self._album))
             return False
         try:
             self._highres_url = what_request['response']['results'][0]['cover']
         except KeyError:
-            logging.info("Found a What-CD Release but without cover")
+            logger.info("Found a What-CD Release but without cover")
             return False
         
         if self._highres_url == "":
-            logging.info("Found a What-CD Release but without cover")
+            logger.info("Found a What-CD Release but without cover")
             return False
         
-        logging.info("Found what.CD Artwork for {}, - {}".format(self._name, self._highres_url))
+        logger.info("Found what.CD Artwork for {}, - {}".format(self._name, self._highres_url))
         self._source = "whatCD"
         return True
         
     def store(self):
-        logging.debug("Cover-URL: {}".format(self._highres_url))
+        logger.debug("Cover-URL: {}".format(self._highres_url))
         
         downloader = urllib.request.build_opener()
         downloader.addheaders = [('User-agent', 'Mozilla/5.0')] #avoid problems with whatIMG
         try:
             with downloader.open(self._highres_url) as \
-                    response, open(os.path.join(self._path,self._highres_url.split("/")[-1]), "wb") as out_file:
+                    response, open(os.path.join(self._path, self._highres_url.split("/")[-1]), "wb") as out_file:
                 shutil.copyfileobj(response, out_file)
         except Exception as e:
-            logging.error("Couldn't write HighRes Artwork for {} - URL is {}: {}".format(self._path,
+            logger.error("Couldn't write HighRes Artwork for {} - URL is {}: {}".format(self._path,
                                                                                          self._highres_url,
                                                                                          e))
             return False
         
         if os.path.splitext(self._highres_url.split("/")[-1])[1] not in (".jpg", ".jpeg"):
-            logging.info("The downloaded Artwork {} is not .jpg or .jpeg, "
+            logger.info("The downloaded Artwork {} is not .jpg or .jpeg, "
                          "so we will convert it to .jpg now".format(self._highres_url.split("/")[-1]))
             im = Image.open(os.path.join(self._path,self._highres_url.split("/")[-1])).convert('RGB')
             im.save(os.path.join(self._path,self._config['folder']['jpgname']))
@@ -223,20 +221,20 @@ class ArtworkFinder():
 def main():
     os.chdir(os.path.split(os.path.abspath(__file__))[0])
     
-    print("Welcome to artwork.py")
+    logger.info("Welcome to artwork.py")
     
     config = configparser.ConfigParser()
     
     if os.path.isfile('artwork.ini') is False:
         if os.path.isfile('artwork.dat') is True:
             os.remove("artwork.dat")
-        print("SETUP")
+        logger.info("SETUP")
         while True:
             user_input = input("Do you want to use iTunes as Database? (Y/N) ")
             if user_input.lower() == "y":
                 countries = input("Do you want to use anything else except only the American iTunes Store? "
-                                "If so, enter the country codes separated by comma without any spaces. "
-                                "If you only want to use the US Store, hit Enter ")
+                                  "If so, enter the country codes separated by comma without any spaces. "
+                                  "If you only want to use the US Store, hit Enter ")
                 if countries == '':
                     countries = 'us'
                 config['iTunes'] = {'use': True,
@@ -248,7 +246,7 @@ def main():
         while True:
             user_input = input("Do you want to use What.CD as Database? (Y/N)")
             if user_input.lower() == "y":
-                print("OK, for that we will need your What-CD login")
+                logger.info("OK, for that we will need your What-CD login")
                 whatcd_user = input("What.cd Username:")
                 whatcd_pw = input("What.cd Password:")
                 config['what-cd'] = {'use': True,
@@ -264,7 +262,7 @@ def main():
         while True:
             folder_input = input("Do you want to use something else as folder.jpg? (Y/N) ")
             if folder_input.lower() == "n":
-                config['folder'] = {'jpgname':'folder.jpg'}
+                config['folder'] = {'jpgname': 'folder.jpg'}
                 break
             if folder_input.lower() == "y":
                 jpg_name = input("Ok, then enter your desired name: ")
@@ -275,14 +273,14 @@ def main():
         
         with open('artwork.ini', 'w') as configfile:
             config.write(configfile)
-        print("Setup successful - if you want to run this setup again, "
-              "simply delete the artwork.ini file or modify it for your needs")
+        logger.info("Setup successful - if you want to run this setup again, "
+                     "simply delete the artwork.ini file or modify it for your needs")
         
     else:
         config.read('artwork.ini')
            
     if config['what-cd'].getboolean('use') is True and os.path.isfile("artwork.dat") is False:
-        print("There's no cookie for your What.cd Login - so we will have to login you")
+        logger.info("There's no cookie for your What.cd Login - so we will have to login you")
         login_tryouts = 0
         while True:
             try:
@@ -294,13 +292,13 @@ def main():
             except Exception as e:
                 login_tryouts += 1
                 if login_tryouts > 3:
-                    print("It seems What-CD is down, so we won't use that now this time")
+                    logger.error("It seems What-CD is down, so we won't use that now this time")
                     config['what-cd'] = {'use':False}
                     if config['iTunes'].getboolean('use') is False:
                         sys.exit("No iTunes and what.CD search is now active - so we're closing the program")
                     break
-                print("There was a LogIn Error {e} - You have still have {}/3 chances. "
-                      "Please Re Enter Your LoigIn Data".format(e, login_tryouts))
+                logger.error("There was a LogIn Error {e} - You have still have {}/3 chances. "
+                              "Please Re Enter Your LogIn Data".format(e, login_tryouts))
                 whatcd_user = input("What.cd Username:")
                 whatcd_pw = input("What.cd Password:")
                 config['what-cd'] = {'use': True,
@@ -319,21 +317,21 @@ def main():
                 whatcd_api = whatapi.WhatAPI(username=config['what-cd']['username'],
                                              password=config['what-cd']['password'],
                                              cookies=whatcd_cookies)
-                print("LogIn into What.CD was sucessful")
+                logger.info("LogIn into What.CD was sucessful")
                 break
             except Exception as e:
                 if login_tryouts >= 3:
-                    print("There seems to be some kind of error during logging in : {} - "
-                          "we won't use What.cd this time".format(e))
+                    logger.info("There seems to be some kind of error during logger in : {} - "
+                                 "we won't use What.cd this time".format(e))
                     config['what-cd']['use'] = False
                     if config['iTunes'].getboolean('use') is False:
-                        sys.exit("No iTunes and what.CD search is now active - so we're closing the program")
+                        sys.exit("No iTunes and what.CD search is now active - so we're closing the script")
                     break
                 login_tryouts += 1
 
     try:
         path = sys.argv[1]
-        print("Scans {}".format(path))
+        logger.info("Scans {}".format(path))
         folders_to_check = [path]
     except:
         path = input("Please Enter your Path you want to scan: ")
@@ -354,7 +352,7 @@ def main():
                 break
         
         if audio is True and artwork is True:
-            logging.info("There's already artwork for {}".format(folder))
+            logger.info("There's already artwork for {}".format(folder))
             continue
         
         if audio is True and artwork is False:
@@ -362,43 +360,43 @@ def main():
                 try:
                     artist = FLAC(check_file)["artist"][0]
                 except:
-                    logging.error("Artist not tagged in folder {}".format(check_file))
+                    logger.error("Artist not tagged in folder {}".format(check_file))
                     artist = ""
                 try:
                     album = FLAC(check_file)["album"][0]
                 except:
-                    logging.error("Album not tagged in folder {}".format(check_file))
+                    logger.error("Album not tagged in folder {}".format(check_file))
                     album = ""
 
             if os.path.splitext(check_file)[1] == ".mp3":
                 try:
                     artist = MP3(check_file)["artist"][0]
                 except:
-                    logging.error("Artist not tagged in folder {}".format(check_file))
+                    logger.error("Artist not tagged in folder {}".format(check_file))
                     artist = ""
                 try:
                     album = MP3(check_file)["album"][0]
                 except:
-                    logging.error("Album not tagged in folder {}".format(check_file))
+                    logger.error("Album not tagged in folder {}".format(check_file))
                     album = ""
 
             if os.path.splitext(check_file)[1] == ".m4a":
                 try:
                     artist = MP4(check_file)["\xa9ART"]
                 except KeyError:
-                    logging.warning("Artist not tagged in folder {}".format(check_file))
+                    logger.warning("Artist not tagged in folder {}".format(check_file))
                     artist = ""
                 try:
                     album = MP4(check_file)["\xa9alb"]
                 except:
-                    logging.warning("Album not tagged in folder {}".format(check_file))
+                    logger.warning("Album not tagged in folder {}".format(check_file))
                     album = ""
 
             if album == "" and artist == "":
-                logging.warning("Album isn't tagged at all, will skip: {}".format(check_file))
+                logger.warning("Album isn't tagged at all, will skip: {}".format(check_file))
                 continue
             
-            logging.info("Found the following information for {}: Artist: {} and Album: {}".format(check_file,
+            logger.debug("Found the following information for {}: Artist: {} and Album: {}".format(check_file,
                                                                                                    artist,
                                                                                                    album))
 
@@ -409,7 +407,7 @@ def main():
                                            whatcdapi=whatcd_api)
             artwork_finder.get_artwork()
             
-    print("Done")
+    logger.info("Done")
     input("Press Enter To Exit")
     sys.exit(0)
 
@@ -421,12 +419,12 @@ if __name__ == '__main__':
         try:
             main()
         except KeyError as e:
-            print("Your config file is outdated for the current version of this script - "
-                  "it's recommended to delete the 'artwork.ini' file to force the setup once again: {}".format(e))
-            print("Press Enter to Exit")
+            logger.info("Your config file is outdated for the current version of this script - "
+                        "it's recommended to delete the 'artwork.ini' file to force the setup once again:{}".format(e))
+            logger.info("Press Enter to Exit")
             sys.exit(1)
         except Exception as e:
-            print(Exception)
-            print("Unexpected Error - {}".format(e))
+            logger.info(Exception)
+            logger.info("Unexpected Error - {}".format(e))
             input("Press Enter To Exit")
             sys.exit(1)
